@@ -1,10 +1,20 @@
-Changes
+lib/Net/EtcDv2/AuthenticationActions.pm
+lib/Net/EtcDv2/DirectoryActions.pm
+lib/Net/EtcDv2/EntryStat.pm
+lib/Net/EtcDv2/KeyActions.pm
+lib/Net/EtcDv2/RoleActions.pm
+lib/Net/EtcDv2/UserActions.pm
 lib/Net/EtcDv2.pm
 LICENSE
 Makefile.PL
 MANIFEST			This list of files
-README
+MANIFEST.SKIP
+README.md
+cpanfile
 t/00-load.t
+t/01-object.t
+t/02-stat.t
+t/03-mkdir.t
 t/manifest.t
 t/pod-coverage.t
 t/pod.t
