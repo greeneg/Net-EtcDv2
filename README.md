@@ -1,55 +1,52 @@
 # Net-EtcDv2
+
 Net::EtcDv2 - A Perl module to use the EtcD version 2 api
 Net-EtcDv2
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
+## SUMMARY
 
-A README file is required for CPAN modules since CPAN extracts the README
-file from a module distribution so that people browsing the archive
-can use it to get an idea of the module's uses. It is usually a good idea
-to provide version information here so that people can decide whether
-fixes for the module are worth downloading.
+This module is an OO interface to the EtcD key/value system using the v2 API.
 
+The Net::EtcDv2 module allows code to create, read, update, and delete
+key/value data in an etcd cluster. Additionally, using the v2 API, this module
+can create, list, and delete directories in the key store to organize the data.
 
-INSTALLATION
+Additionally, this module can manage users and roles, which govern the access
+rights to the key/value heirarchy.
+
+## INSTALLATION
 
 To install this module, run the following commands:
 
-	perl Makefile.PL
-	make
-	make test
-	make install
+```sh
+perl Makefile.PL
+make
+make test
+make install
+```
 
-SUPPORT AND DOCUMENTATION
+## SUPPORT AND DOCUMENTATION
 
 After installing, you can find documentation for this module with the
 perldoc command.
 
-    perldoc Net::EtcDv2
+```sh
+perldoc Net::EtcDv2
+```
 
 You can also look for information at:
 
-    RT, CPAN's request tracker (report bugs here)
-        https://rt.cpan.org/NoAuth/Bugs.html?Dist=Net-EtcDv2
+- AnnoCPAN, Annotated CPAN documentation
+  - http://annocpan.org/dist/Net-EtcDv2
 
-    AnnoCPAN, Annotated CPAN documentation
-        http://annocpan.org/dist/Net-EtcDv2
+- CPAN Ratings
+  - https://cpanratings.perl.org/d/Net-EtcDv2
 
-    CPAN Ratings
-        https://cpanratings.perl.org/d/Net-EtcDv2
+- Search CPAN
+  - https://metacpan.org/release/Net-EtcDv2
 
-    Search CPAN
-        https://metacpan.org/release/Net-EtcDv2
-
-
-LICENSE AND COPYRIGHT
+## LICENSE AND COPYRIGHT
 
 This software is Copyright (c) 2020 by Gary L. Greene, Jr.
 
-This is free software, licensed under:
-
-  The Apache License, Version 2.0, January 2004
-
+This is free software, licensed under the Apache License, Version 2.0.
