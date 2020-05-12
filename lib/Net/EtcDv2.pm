@@ -1,7 +1,6 @@
 package Net::EtcDv2 v0.0.1 {
     use v5.30;
-    use strict;
-    use warnings;
+    use strictures;
     use utf8;
     use English;
 
@@ -15,6 +14,7 @@ package Net::EtcDv2 v0.0.1 {
     use boolean;
     use Data::Dumper;
     use Errno qw(:POSIX);
+    use HTTP::Request;
     use HTTP::Status qw(:constants);
     use JSON;
     use LWP::UserAgent;
@@ -95,9 +95,14 @@ package Net::EtcDv2 v0.0.1 {
         } catch {
             classify $_, {
                 404 => sub {
-                    exit ENXIO;
+                    # rethrow
+                    throw "$_->{'error'}", {
+                        'type' => $_->{'type'},
+                        'info' => $_->{'info'}
+                    };
                 },
                 default => sub {
+                    # Dunno what this is, so be fatal
                     exit EPERM;
                 }
             };
@@ -111,35 +116,45 @@ package Net::EtcDv2 v0.0.1 {
         my $sub = (caller(0))[3];
         say STDERR "DEBUG: Sub: $sub" if $debug;
 
+        my $content     = undef;
         my $stat_struct = undef;
         my $response    = undef;
         # we cannot create a directory if it already exists
         try {
-            my $response = $self->stat('/myTestDir');
-            my $rc = $response->code();
-            # unconditionally throw
-            throw "HTTP error", { 'type' => $rc };
+            $self->stat('/myTestDir') or throw "HTTP error", {
+                'type' => int($ERRNO),
+                'error_string' => $ERRNO,
+                'info' => 'Attempted to create directory in cluster'
+            };
         } catch {
-            classify $_, {
+            classify $ARG, {
                 200 => sub {
-                    exit EEXIST;
+                    say STDERR "DEBUG: Path '$path' exists. Bailing out." if $debug;
+                    # an item exists, so we cannot create a directory, rethrow
+                    throw $ARG->{'error'}, {
+                        'type' => $ARG->{'type'},
+                        'error_string' => "Path not found",
+                        'info' => $ARG->{'info'}
+                    };
                 },
                 404 => sub {
+                    say STDERR "DEBUG: Path '$path' does not exist. Creating directory" if $debug;
                     # now we can actually create the directory
                     my $ua = LWP::UserAgent->new();
-                    unless {
-
+                    unless (defined $user && defined $password) {
+                        my %args = ('dir' => 'true');
+                        my $request = $ua->put("$host:$port/v2/keys$path", \%args);
+                        return $request->content();
                     } else {
-
+                        # TODO
                     }
                 },
-                default = sub {
-
+                default => sub {
+                    say STDERR "DEBUG: Got a default error:";
+                    say STDERR "DEBUG: ";
                 }
             };
         };
-
-        return $path;
     }
 
     true; # End of Net::EtcDv2

@@ -2,17 +2,12 @@ use 5.30.0;
 use strict;
 use warnings;
 
-use HTTP::Status qw(:constants);
-use Try::Tiny qw(try catch);
-use Throw qw(throw classify);
+use JSON;
 use Test::More 'no_plan';
-
-BEGIN {
-    use_ok('Net::EtcDv2');
-}
+use Net::EtcDv2;
 
 SKIP: {
-    skip "missing env vars(ETCD_HOST, ETCD_PORT)", 3,
+    skip "missing env vars(ETCD_HOST, ETCD_PORT)", 2,
         unless (exists $ENV{'ETCD_HOST'} && exists $ENV{'ETCD_PORT'});
 
     # a little prettier debug output
@@ -21,16 +16,11 @@ SKIP: {
         'host' => $ENV{'ETCD_HOST'},
         'port' => $ENV{'ETCD_PORT'}
     );
-    try {
-        my $r = $o->stat('/myTestDir');
-        my $rc = $r->code();
-        if ($r->code ne HTTP_OK) {
-            throw "HTTP error", {
-                'type' => $r,
 
-            };
-        }
-    } catch {}
-
-    ok(defined $r);
+    ok(defined $o);
+    say STDERR "" if $ENV{DEBUG};
+    my $r = $o->mkdir('/myTestDir');
+    # now lets inspect the output
+    my $content = decode_json($r);
+    ok($content->{'node'}->{'key'} eq '/myTestDir');
 }
