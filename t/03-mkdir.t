@@ -2,25 +2,40 @@ use 5.30.0;
 use strict;
 use warnings;
 
+use boolean;
+use Data::Dumper;
 use JSON;
 use Test::More 'no_plan';
+
 use Net::EtcDv2;
+
+BEGIN {
+    use_ok('Net::EtcDv2');
+}
 
 SKIP: {
     skip "missing env vars(ETCD_HOST, ETCD_PORT)", 2,
         unless (exists $ENV{'ETCD_HOST'} && exists $ENV{'ETCD_PORT'});
 
+    my $debug = false;
+    if (exists $ENV{'DEBUG'} && $ENV{'DEBUG'} eq 1) {
+        $debug = true;
+    } else {
+        $debug = false;
+    }
+
     # a little prettier debug output
-    say STDERR "" if $ENV{DEBUG};
     my $o = Net::EtcDv2->new(
         'host' => $ENV{'ETCD_HOST'},
-        'port' => $ENV{'ETCD_PORT'}
+        'port' => $ENV{'ETCD_PORT'},
+        'debug' => $ENV{'DEBUG'} || 0
     );
 
     ok(defined $o);
-    say STDERR "" if $ENV{DEBUG};
-    my $r = $o->mkdir('/myTestDir');
+    my ($x, $r) = $o->mkdir('/myTestDir');
+    say "DEBUG: mkdir output: " . Dumper($x) . "\n\n". Dumper($r) if $debug;
     # now lets inspect the output
     my $content = decode_json($r);
+    say "DEBUG: content: ". Dumper($content);
     ok($content->{'node'}->{'key'} eq '/myTestDir');
 }

@@ -28,13 +28,14 @@ package Net::EtcDv2 v0.0.1 {
     my $password = undef;
 
     sub new ($class, %args) {
-        if (exists $ENV{'DEBUG'}) {
+        if (exists $args{'debug'}) {
             $debug = true;
         }
+
         my $sub = (caller(0))[3];
         if ($debug eq true) {
-            say STDERR "DEBUG: Sub: $sub";
-            say STDERR "DEBUG: Constructing object";
+            say "DEBUG: Sub: $sub";
+            say "DEBUG: Constructing object";
         }
 
         $host     = $args{'host'};
@@ -53,7 +54,8 @@ package Net::EtcDv2 v0.0.1 {
 
     our sub stat ($self, $path) {
         my $sub = (caller(0))[3];
-        say STDERR "DEBUG: Sub: $sub" if $debug;
+        say "DEBUG: debug == $debug" if $debug;
+        say "DEBUG: Sub: $sub" if $debug;
 
         my $stat_struct = undef;
         my $response    = undef;
@@ -61,6 +63,7 @@ package Net::EtcDv2 v0.0.1 {
             my $ua = LWP::UserAgent->new();
             unless (defined $user && defined $password) {
                 $response = $ua->get("$host:$port/v2/keys${path}");
+                say "DEBUG: " . Dumper $response;
                 my $rc = $response->code();
                 if ($rc ne HTTP_OK) {
                     throw(
@@ -93,6 +96,7 @@ package Net::EtcDv2 v0.0.1 {
                 $response = $ua->get("$host:$port");
             }
         } catch {
+            say "DEBUG: catch args: $_" if $debug;
             classify $_, {
                 404 => sub {
                     # rethrow
@@ -108,7 +112,7 @@ package Net::EtcDv2 v0.0.1 {
             };
         };
 
-        say STDERR "DEBUG: Stat struct: " . Dumper($stat_struct) if $debug;
+        say "DEBUG: Stat struct: " . Dumper($stat_struct);
         return $stat_struct;
     }
 
@@ -116,45 +120,84 @@ package Net::EtcDv2 v0.0.1 {
         my $sub = (caller(0))[3];
         say STDERR "DEBUG: Sub: $sub" if $debug;
 
-        my $content     = undef;
-        my $stat_struct = undef;
-        my $response    = undef;
+        my $content        = undef;
+        my $request_struct = undef;
+        my $status         = undef;
         # we cannot create a directory if it already exists
         try {
-            $self->stat('/myTestDir') or throw "HTTP error", {
+            $content = $self->stat($path) or throw "HTTP error", {
                 'type' => int($ERRNO),
                 'error_string' => $ERRNO,
                 'info' => 'Attempted to create directory in cluster'
             };
+            if (defined $content && $content->{'type'} eq 'dir') {
+                throw 'Directory Exists', {
+                    'type'         => 200,
+                    'error_string' => 'item exists',
+                    'info'         => 'Attempted to create directory in cluster'
+                };
+            } elsif (defined $content && $content->{'type'} ne 'dir') {
+                throw 'Not a Directory', {
+                    'type'         => 400,
+                    'error_string' => 'item exists, not a directory',
+                    'info'         => 'Attempted to create directory in cluster'
+                }
+            } else {
+                throw 'No Such Directory', {
+                    'type'         => 404,
+                    'error_string' => 'item not found',
+                    'info'         => 'Attempted to create directory in cluster'
+                }
+            }
         } catch {
+            say "DEBUG: args" . Dumper($ARG) if $debug;
+            my $exception_type = $ARG->{'error'};
+            my $error_code     = $ARG->{'type'};
+            my $error_string   = $ARG->{'error_string'};
+            my $info           = $ARG->{'info'};
+            say "DEBUG: code; $error_code" if $debug;
             classify $ARG, {
                 200 => sub {
-                    say STDERR "DEBUG: Path '$path' exists. Bailing out." if $debug;
-                    # an item exists, so we cannot create a directory, rethrow
-                    throw $ARG->{'error'}, {
-                        'type' => $ARG->{'type'},
-                        'error_string' => "Path not found",
-                        'info' => $ARG->{'info'}
-                    };
+                    say "DEBUG: Path '$path' already exists. Cannot create directory" if $debug;
+                    $status = false;
+                    throw $exception_type, {
+                        'type'         => $error_code,
+                        'error_string' => $error_string,
+                        'info'         => $info
+                    }
                 },
                 404 => sub {
-                    say STDERR "DEBUG: Path '$path' does not exist. Creating directory" if $debug;
+                    say "DEBUG: Path '$path' does not exist. Creating directory" if $debug;
                     # now we can actually create the directory
                     my $ua = LWP::UserAgent->new();
                     unless (defined $user && defined $password) {
                         my %args = ('dir' => 'true');
                         my $request = $ua->put("$host:$port/v2/keys$path", \%args);
-                        return $request->content();
+                        $status = true;
+                        $request_struct = $request->content();
                     } else {
-                        # TODO
+                        my %args = ('dir' => 'true');
+                        my $request = $ua->put("$host:$port/v2/keys$path". \%args);
+                        $status = true;
+                        $request_struct = $request->content();
                     }
                 },
                 default => sub {
-                    say STDERR "DEBUG: Got a default error:";
-                    say STDERR "DEBUG: ";
+                    say STDERR "DEBUG: Got a default error:" if $debug;
+                    say STDERR "DEBUG: ". Dumper($ARG) if $debug;
+                    throw $ARG->{'error'}, {
+                        'type'         => $ARG->{'type'},
+                        'error_string' => $ARG->{'error_string'},
+                        'info'         => $ARG->{'info'}
+                    };
                 }
             };
         };
+        if ($status = true) {
+            return ($JSON::true, $request_struct);
+        } else {
+            return ($JSON::false, '{"error":"Entry already exists"}');
+        }
     }
 
     true; # End of Net::EtcDv2
@@ -262,6 +305,32 @@ B<Exceptions:>
 
 If the named entry, irregardless of the type, exists, the method will emit
 error EEXIST
+
+=head2 rmdir
+
+This method will delete a directory if the named object exists, and is empty.
+If any of the following are true, the method emits and appropriate exception:
+
+  - If the directory does not exist
+  - If the directory is not empty
+  - If the object is not a directory
+
+B<Parameters:>
+
+  - self, SCALAR REF: the object reference
+  - path, SCALAR:     the full path to delete
+
+B<Return type:>
+
+  - void
+
+B<Exceptions:>
+
+The following exceptions are emitted during error events:
+
+  - If the directory does not exist, a 404 exception is thrown
+  - If the directory is not empty, a 400 exception is thrown
+  - If the object is not a directory, a 400 exception is thrown
 
 =head1 AUTHOR
 
