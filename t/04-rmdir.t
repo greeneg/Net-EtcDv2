@@ -14,7 +14,7 @@ BEGIN {
 }
 
 SKIP: {
-    skip "missing env vars(ETCD_HOST, ETCD_PORT)", 2,
+    skip "missing env vars(ETCD_HOST, ETCD_PORT)", 4,
         unless (exists $ENV{'ETCD_HOST'} && exists $ENV{'ETCD_PORT'});
 
     my $debug = false;

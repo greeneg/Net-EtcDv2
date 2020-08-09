@@ -246,7 +246,7 @@ package Net::EtcDv2::DirectoryActions {
         if ($status = true) {
             return ($JSON::true, $request_struct);
         } else {
-            return ($JSON::false, '{"error":"Entry already exists"}');
+            return ($JSON::false, '{"error":"Entry does not exist"}');
         }
     }
 
