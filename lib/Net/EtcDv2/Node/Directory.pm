@@ -1,4 +1,4 @@
-package Net::EtcDv2::DirectoryActions {
+package Net::EtcDv2::Node::Directory {
     use v5.30;
     use strictures;
     use utf8;
@@ -21,10 +21,10 @@ package Net::EtcDv2::DirectoryActions {
     use Throw qw(throw classify);
     use Try::Tiny qw(try catch);
 
-    use Net::EtcDv2;
+    use Net::EtcDv2::Node;
 
     # class references
-    my $ent = undef;
+    my $node = undef;
 
     # class member data
     my $debug    = false;
@@ -54,7 +54,7 @@ package Net::EtcDv2::DirectoryActions {
             $password = $args{'password'};
         }
 
-        $ent = Net::EtcDv2::EntryStat->new(
+        $node = Net::EtcDv2::Node->new(
             'debug'     => $debug,
             'host'      => $host,
             'password'  => $password,
@@ -75,7 +75,7 @@ package Net::EtcDv2::DirectoryActions {
         my $status         = undef;
         # we cannot create a directory if it already exists
         try {
-            $content = $ent->stat($path) or throw "HTTP error", {
+            $content = $node->stat($path) or throw "HTTP error", {
                 'type' => int($ERRNO),
                 'error_string' => $ERRNO,
                 'info' => 'Attempted to create directory in cluster'
@@ -162,7 +162,7 @@ package Net::EtcDv2::DirectoryActions {
         my $status         = undef;
         # we cannot create a directory if it already exists
         try {
-            $content = $ent->stat($path) or throw "HTTP error", {
+            $content = $node->stat($path) or throw "HTTP error", {
                 'type' => int($ERRNO),
                 'error_string' => $ERRNO,
                 'info' => 'Attempted to create directory in cluster'

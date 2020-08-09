@@ -21,12 +21,13 @@ package Net::EtcDv2 v0.0.1 {
     use Throw qw(throw classify);
     use Try::Tiny qw(try catch);
 
-    use Net::EtcDv2::EntryStat;
-    use Net::EtcDv2::DirectoryActions;
+    use Net::EtcDv2::Node;
+    use Net::EtcDv2::Node::Directory;
+#    use Net::EtcDv2::Node::Key;
 
     # class references
-    my $ent = undef;
-    my $dir_actions = undef;
+    my $node = undef;
+    my $node_dir = undef;
 
     # class member data
     my $debug    = false;
@@ -56,7 +57,7 @@ package Net::EtcDv2 v0.0.1 {
             $password = $args{'password'};
         }
 
-        $ent = Net::EtcDv2::EntryStat->new(
+        $node = Net::EtcDv2::Node->new(
             'debug'     => $debug,
             'host'      => $host,
             'password'  => $password,
@@ -64,7 +65,7 @@ package Net::EtcDv2 v0.0.1 {
             'user'      => $user
         );
 
-        $dir_actions = Net::EtcDv2::DirectoryActions->new(
+        $node_dir = Net::EtcDv2::Node::Directory->new(
             'debug'     => $debug,
             'host'      => $host,
             'password'  => $password,
@@ -77,15 +78,19 @@ package Net::EtcDv2 v0.0.1 {
     }
 
     our sub stat ($self, $path) {
-        return $ent->stat($path);
+        return $node->stat($path);
+    }
+
+    our sub ls ($self, $path, $recursive = false) {
+        return $node->ls($path, $recursive);
     }
 
     our sub mkdir ($self, $path) {
-        return $dir_actions->mkdir($path);
+        return $node_dir->mkdir($path);
     }
 
     our sub rmdir ($self, $path, $recursive = false) {
-        return $dir_actions->rmdir($path, $recursive);
+        return $node_dir->rmdir($path, $recursive);
     }
 
     true; # End of Net::EtcDv2
@@ -168,6 +173,33 @@ B<Parameters:>
 
 B<Return type:>
 
+  - stat_struct: HASH: the stat information for the path
+
+B<Exceptions:>
+
+If the object is not found (HTTP 404), the method will emit error ENXIO
+
+=head2 ls
+
+This method, like stat, takes a path and gathers information about the etcd
+object. If the item doesn't exist, it throws an exception (error code 6).
+
+Unlike C<stat>, it only returns in the JSON response the node name, type, and
+whether it has any children. In addition, while C<stat> only returns specific
+information about the named node, ls can do recursive listing, and if the item
+requested was a directory, it's immediate children; any child items are nested
+in the response.
+
+B<Parameters:>
+
+  - self, SCALAR REF: the object reference
+  - path, SCALAR:     the path segment of the URI to get info for
+  - recursive, SCALAR boolean [OPTIONAL]: Whether to recursively descend into
+                                          sub directories
+
+B<Return type:>
+
+  - status, SCALAR boolean: Whether the listing was successful or not
   - stat_struct: HASH: the stat information for the path
 
 B<Exceptions:>

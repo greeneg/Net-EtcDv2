@@ -1,9 +1,9 @@
-lib/Net/EtcDv2/AuthenticationActions.pm
-lib/Net/EtcDv2/DirectoryActions.pm
-lib/Net/EtcDv2/EntryStat.pm
-lib/Net/EtcDv2/KeyActions.pm
-lib/Net/EtcDv2/RoleActions.pm
-lib/Net/EtcDv2/UserActions.pm
+lib/Net/EtcDv2/Auth.pm
+lib/Net/EtcDv2/Auth/Role.pm
+lib/Net/EtcDv2/Auth/User.pm
+lib/Net/EtcDv2/Node.pm
+lib/Net/EtcDv2/Node/Directory.pm
+lib/Net/EtcDv2/Node/Key.pm
 lib/Net/EtcDv2.pm
 LICENSE
 Makefile.PL
@@ -13,6 +13,7 @@ README.md
 cpanfile
 t/00-load.t
 t/01-object.t
+t/02-ls.t
 t/02-stat.t
 t/03-mkdir.t
 t/04-rmdir.t
