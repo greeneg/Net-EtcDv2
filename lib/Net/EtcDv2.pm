@@ -21,6 +21,14 @@ package Net::EtcDv2 v0.0.1 {
     use Throw qw(throw classify);
     use Try::Tiny qw(try catch);
 
+    use Net::EtcDv2::EntryStat;
+    use Net::EtcDv2::DirectoryActions;
+
+    # class references
+    my $ent = undef;
+    my $dir_actions = undef;
+
+    # class member data
     my $debug    = false;
     my $host     = undef;
     my $port     = undef;
@@ -28,7 +36,7 @@ package Net::EtcDv2 v0.0.1 {
     my $password = undef;
 
     sub new ($class, %args) {
-        if (exists $args{'debug'}) {
+        if (exists $args{'debug'} && $args{'debug'} eq true) {
             $debug = true;
         }
 
@@ -48,156 +56,36 @@ package Net::EtcDv2 v0.0.1 {
             $password = $args{'password'};
         }
 
+        $ent = Net::EtcDv2::EntryStat->new(
+            'debug'     => $debug,
+            'host'      => $host,
+            'password'  => $password,
+            'port'      => $port,
+            'user'      => $user
+        );
+
+        $dir_actions = Net::EtcDv2::DirectoryActions->new(
+            'debug'     => $debug,
+            'host'      => $host,
+            'password'  => $password,
+            'port'      => $port,
+            'user'      => $user
+        );
+
         my $self = {};
         bless $self, $class;
     }
 
     our sub stat ($self, $path) {
-        my $sub = (caller(0))[3];
-        say "DEBUG: debug == $debug" if $debug;
-        say "DEBUG: Sub: $sub" if $debug;
-
-        my $stat_struct = undef;
-        my $response    = undef;
-        try {
-            my $ua = LWP::UserAgent->new();
-            unless (defined $user && defined $password) {
-                $response = $ua->get("$host:$port/v2/keys${path}");
-                say "DEBUG: " . Dumper $response;
-                my $rc = $response->code();
-                if ($rc ne HTTP_OK) {
-                    throw(
-                        "HTTP I/O error", {
-                            'type' => $rc,
-                            'uri'  => $response->base,
-                            'info' => "Attempt to stat entry from etcd cluster"
-                        }
-                    );
-                } else {
-                    my $content = decode_json($response->content);
-                    my $uri = $response->base->as_string;
-                    my $cluster_id = $response->header('x-etcd-cluster-id');
-                    my $ace_allow_origin = $response->header('access-control-allow-origin');
-                    my $ace_allow_methods = $response->header('access-control-allow-methods');
-                    my $heirarchy_index = $response->header('x-etcd-index');
-                    my $type = 'key';
-                    if (exists $content->{'node'}->{'dir'} && $content->{'node'}->{'dir'} eq true) {
-                        $type = 'dir';
-                    }
-                    $stat_struct = {
-                        'uri'  => $uri,
-                        'type' => $type,
-                        'entryId' => "$cluster_id:$heirarchy_index",
-                        'ace'     => "$ace_allow_origin:$ace_allow_methods"
-                    };
-                }
-            } else {
-                $response = $ua->credentials("$host:$port", 'Basic', $user, $password);
-                $response = $ua->get("$host:$port");
-            }
-        } catch {
-            say "DEBUG: catch args: $_" if $debug;
-            classify $_, {
-                404 => sub {
-                    # rethrow
-                    throw "$_->{'error'}", {
-                        'type' => $_->{'type'},
-                        'info' => $_->{'info'}
-                    };
-                },
-                default => sub {
-                    # Dunno what this is, so be fatal
-                    exit EPERM;
-                }
-            };
-        };
-
-        say "DEBUG: Stat struct: " . Dumper($stat_struct);
-        return $stat_struct;
+        return $ent->stat($path);
     }
 
     our sub mkdir ($self, $path) {
-        my $sub = (caller(0))[3];
-        say STDERR "DEBUG: Sub: $sub" if $debug;
+        return $dir_actions->mkdir($path);
+    }
 
-        my $content        = undef;
-        my $request_struct = undef;
-        my $status         = undef;
-        # we cannot create a directory if it already exists
-        try {
-            $content = $self->stat($path) or throw "HTTP error", {
-                'type' => int($ERRNO),
-                'error_string' => $ERRNO,
-                'info' => 'Attempted to create directory in cluster'
-            };
-            if (defined $content && $content->{'type'} eq 'dir') {
-                throw 'Directory Exists', {
-                    'type'         => 200,
-                    'error_string' => 'item exists',
-                    'info'         => 'Attempted to create directory in cluster'
-                };
-            } elsif (defined $content && $content->{'type'} ne 'dir') {
-                throw 'Not a Directory', {
-                    'type'         => 400,
-                    'error_string' => 'item exists, not a directory',
-                    'info'         => 'Attempted to create directory in cluster'
-                }
-            } else {
-                throw 'No Such Directory', {
-                    'type'         => 404,
-                    'error_string' => 'item not found',
-                    'info'         => 'Attempted to create directory in cluster'
-                }
-            }
-        } catch {
-            say "DEBUG: args" . Dumper($ARG) if $debug;
-            my $exception_type = $ARG->{'error'};
-            my $error_code     = $ARG->{'type'};
-            my $error_string   = $ARG->{'error_string'};
-            my $info           = $ARG->{'info'};
-            say "DEBUG: code; $error_code" if $debug;
-            classify $ARG, {
-                200 => sub {
-                    say "DEBUG: Path '$path' already exists. Cannot create directory" if $debug;
-                    $status = false;
-                    throw $exception_type, {
-                        'type'         => $error_code,
-                        'error_string' => $error_string,
-                        'info'         => $info
-                    }
-                },
-                404 => sub {
-                    say "DEBUG: Path '$path' does not exist. Creating directory" if $debug;
-                    # now we can actually create the directory
-                    my $ua = LWP::UserAgent->new();
-                    unless (defined $user && defined $password) {
-                        my %args = ('dir' => 'true');
-                        my $request = $ua->put("$host:$port/v2/keys$path", \%args);
-                        $status = true;
-                        $request_struct = $request->content();
-                    } else {
-                        my %args = ('dir' => 'true');
-                        my $request = $ua->put("$host:$port/v2/keys$path". \%args);
-                        $status = true;
-                        $request_struct = $request->content();
-                    }
-                },
-                default => sub {
-                    say STDERR "DEBUG: Got a default error:" if $debug;
-                    say STDERR "DEBUG: ". Dumper($ARG) if $debug;
-                    throw $ARG->{'error'}, {
-                        'type'         => $ARG->{'type'},
-                        'error_string' => $ARG->{'error_string'},
-                        'info'         => $ARG->{'info'}
-                    };
-                }
-            };
-        };
-        if ($status = true) {
-            return ($JSON::true, $request_struct);
-        } else {
-            return ($JSON::false, '{"error":"Entry already exists"}');
-        }
+    our sub rmdir ($self, $path, $recursive = false) {
+        return $dir_actions->rmdir($path, $recursive);
     }
 
     true; # End of Net::EtcDv2
@@ -312,17 +200,19 @@ This method will delete a directory if the named object exists, and is empty.
 If any of the following are true, the method emits and appropriate exception:
 
   - If the directory does not exist
-  - If the directory is not empty
+  - If the directory is not empty unless the recursive flag is passed
   - If the object is not a directory
 
 B<Parameters:>
 
-  - self, SCALAR REF: the object reference
-  - path, SCALAR:     the full path to delete
+  - self, SCALAR REF:   the object reference
+  - path, SCALAR:       the full path to delete
+  - recursive, boolean: whether to recursively delete the directory if it
+                        contains any content
 
 B<Return type:>
 
-  - void
+  - path: SCALAR:       the path that was created
 
 B<Exceptions:>
 

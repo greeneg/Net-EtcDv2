@@ -5,7 +5,7 @@ use warnings;
 use boolean;
 use Data::Dumper;
 use JSON;
-use Test::More tests => 3;
+use Test::More tests => 5;
 
 use Net::EtcDv2;
 
@@ -32,10 +32,12 @@ SKIP: {
     );
 
     ok(defined $o);
-    my ($x, $r) = $o->mkdir('/myTestDir');
-    say "DEBUG: mkdir output: x: " . Dumper($x) . "DEBUG: r: ". Dumper($r) if $debug;
+    my ($x, $r) = $o->rmdir('/myTestDir', false);
+    say "DEBUG: rmdir output: x: " . Dumper($x) . "DEBUG: output: r: ". Dumper($r) if $debug;
     # now lets inspect the output
     my $content = decode_json($r);
-    say "DEBUG: content: ". Dumper($content) if $debug;
+    say "DEBUG: content: ". Dumper($content);
+    ok($content->{'action'} eq 'delete');
+    ok($content->{'node'}->{'dir'} eq $JSON::true);
     ok($content->{'node'}->{'key'} eq '/myTestDir');
 }

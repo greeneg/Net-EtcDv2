@@ -1,7 +1,10 @@
 use 5.30.0;
 use strict;
 use warnings;
-use Test::More 'no_plan';
+use utf8;
+use English;
+
+use Test::More tests => 5;
 
 use Data::Dumper;
 use Try::Tiny;
@@ -15,12 +18,12 @@ SKIP: {
     skip "missing env vars(ETCD_HOST, ETCD_PORT)", 4,
         unless (exists $ENV{'ETCD_HOST'} && exists $ENV{'ETCD_PORT'});
 
-    # a little prettier debug output
-#    say STDERR "" if $ENV{DEBUG};
     my $o = Net::EtcDv2->new(
         'host' => $ENV{'ETCD_HOST'},
         'port' => $ENV{'ETCD_PORT'},
-        'debug' => $ENV{'DEBUG'}
+        'debug' => $ENV{'DEBUG'},
+        'user'  => $ENV{'user'},
+        'password' => $ENV{'password'}
     );
     my $r = $o->stat('/');
 
@@ -32,10 +35,9 @@ SKIP: {
     try {
         $r = $o->stat('/foo');
     } catch {
-        classify $_, {
+        classify $ARG, {
             default => sub {
-                say STDERR "DEBUG: $_->{'error'}" if $ENV{DEBUG};
-                ok($_->{'type'} eq 404);
+                ok($ARG->{'type'} eq 404);
             }
         };
     };

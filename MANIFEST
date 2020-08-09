@@ -15,6 +15,7 @@ t/00-load.t
 t/01-object.t
 t/02-stat.t
 t/03-mkdir.t
+t/04-rmdir.t
 t/manifest.t
 t/pod-coverage.t
 t/pod.t
