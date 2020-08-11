@@ -1,4 +1,4 @@
-package Net::EtcDv2 v0.0.1 {
+package Net::EtcDv2 v0.0.2 {
     use v5.30;
     use strictures;
     use utf8;
