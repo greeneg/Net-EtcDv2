@@ -89,8 +89,11 @@ B<Parameters:>
 
 =cut
     sub new ($class, %args) {
-        if (exists $args{'debug'} && $args{'debug'} eq true) {
-            $debug = true;
+        if (exists $args{'debug'}) {
+            if (defined $args{'debug'} eq true) {
+                say "DEBUG: Enable debug output";
+                $debug = true;
+            }
         }
 
         my $sub = (caller(0))[3];
@@ -242,7 +245,7 @@ If the object is not found (HTTP 404), the method will emit error ENXIO
                 } else {
                     $response = $ua->get("$host:$port/v2/keys${path}");
                 }
-                say "DEBUG: " . Dumper $response;
+                say "DEBUG: " . Dumper($response) if $debug;
                 my $rc = $response->code();
                 if ($rc ne HTTP_OK) {
                     throw(
@@ -262,7 +265,8 @@ If the object is not found (HTTP 404), the method will emit error ENXIO
                     my @nodes = ();
                     if (defined $content->{'node'}->{'nodes'}) {
                         say "DEBUG: nodes? " . Dumper($content->{'node'}->{'nodes'}) if $debug;
-                        foreach my $node ($content->{'node'}->{'nodes'}) {
+                        foreach my $node (@{$content->{'node'}->{'nodes'}}) {
+                            say "DEBUG: node: ". Dumper($node) if $debug;
                             my $key = $node->{'key'};
                             my $l_type = 'key';
                             if ($content->{'node'}->{'dir'} eq true) {
@@ -282,14 +286,14 @@ If the object is not found (HTTP 404), the method will emit error ENXIO
                 $response = $ua->get("$host:$port");
             }
         } catch {
-            say "DEBUG: catch args: $_" if $debug;
-            classify $_, {
+            say "DEBUG: catch args: $ARG" if $debug;
+            classify $ARG, {
                 404 => sub {
                     # rethrow
-                    throw("$_->{'error'}",
+                    throw("$ARG->{'error'}",
                         {
-                            'type' => $_->{'type'},
-                            'info' => $_->{'info'}
+                            'type' => $ARG->{'type'},
+                            'info' => $ARG->{'info'}
                         }
                     );
                 },

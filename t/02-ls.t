@@ -31,16 +31,16 @@ SKIP: {
     ok($r->{'type'} eq 'dir');
 
     # check for any child entries
-#    ok($r->{'children'} eq ['/myDir']);
+    ok($r->{'children'}[0]->{'key'} eq '/myDir');
 
     # now test for something that doesn't exist
-#    try {
-#        $r = $o->ls('/foo');
-#    } catch {
-#        classify $ARG, {
-#            default => sub {
-#                ok($ARG->{'type'} eq 404);
-#            }
-#        };
-#    };
+    try {
+        $r = $o->ls('/foo');
+    } catch {
+        classify $ARG, {
+            default => sub {
+                ok($ARG->{'type'} eq 404);
+            }
+        };
+    };
 }

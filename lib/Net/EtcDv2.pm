@@ -37,8 +37,10 @@ package Net::EtcDv2 v0.0.1 {
     my $password = undef;
 
     sub new ($class, %args) {
-        if (exists $args{'debug'} && $args{'debug'} eq true) {
-            $debug = true;
+        if (exists $args{'debug'}) {
+            if (defined $args{'args'} && $args{'debug'} eq true) {
+                $debug = true;
+            }
         }
 
         my $sub = (caller(0))[3];

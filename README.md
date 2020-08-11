@@ -13,6 +13,19 @@ can create, list, and delete directories in the key store to organize the data.
 Additionally, this module can manage users and roles, which govern the access
 rights to the key/value heirarchy.
 
+** NOTE **: This module is undef heavy development! Right now it can do the
+the following:
+
+- Create and Destroy directories
+- Stat items and list their ACLs
+- List items and children
+
+** TODO **:
+- Better test tree recursion
+- Create, read, delete, and modify keys
+- Create, list, delete, and modify users
+- Create, list, modify, and delete roles
+
 ## INSTALLATION
 
 To install this module, run the following commands:
