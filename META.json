@@ -41,7 +41,8 @@
             "Throw" : "0",
             "Try::Tiny" : "0",
             "boolean" : "0",
-            "perl" : "5.030"
+            "perl" : "5.030",
+            "strictures" : "0"
          }
       },
       "test" : {

@@ -23,6 +23,7 @@ my %WriteMakefileArgs = (
         'HTTP::Status'      => 0,
         'JSON'              => 0,
         'LWP::UserAgent'    => 0,
+        'strictures'        => 0,
         'Throw'             => 0,
         'Try::Tiny'         => 0,
     },

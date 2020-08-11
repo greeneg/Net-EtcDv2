@@ -29,5 +29,6 @@ requires:
   Try::Tiny: '0'
   boolean: '0'
   perl: '5.030'
+  strictures: '0'
 version: v0.0.3
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
