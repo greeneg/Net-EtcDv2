@@ -259,7 +259,7 @@ Net::EtcDv2::DirectoryActions - A object oriented Perl module to create or remov
 
 =head1 VERSION
 
-Version 0.0.1
+Version 0.0.3
 
 =head1 SYNOPSIS
 

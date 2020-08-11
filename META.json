@@ -32,7 +32,16 @@
       },
       "runtime" : {
          "requires" : {
-            "perl" : "5.006"
+            "Data::Dumper" : "0",
+            "Errno" : "0",
+            "HTTP::Request" : "0",
+            "HTTP::Status" : "0",
+            "JSON" : "0",
+            "LWP::UserAgent" : "0",
+            "Throw" : "0",
+            "Try::Tiny" : "0",
+            "boolean" : "0",
+            "perl" : "5.030"
          }
       },
       "test" : {
@@ -42,6 +51,6 @@
       }
    },
    "release_status" : "stable",
-   "version" : "v0.0.1",
+   "version" : "v0.0.3",
    "x_serialization_backend" : "JSON::PP version 4.05"
 }

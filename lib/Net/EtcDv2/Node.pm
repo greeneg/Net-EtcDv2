@@ -33,7 +33,7 @@ Net::EtcDv2::Node - A object oriented Perl module to stat entries in an EtcD v2 
 
 =head1 VERSION
 
-Version 0.0.1
+Version 0.0.3
 
 =head1 SYNOPSIS
 
